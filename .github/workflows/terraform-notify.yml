@@ -27,24 +27,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6
-      with:
-      github-token: ${{ secrets.GITHUB_TOKEN }}
-      script: |
-        // Check if the bot already commented
-        const { data: comments } = await github.rest.issues.listComments({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          issue_number: context.issue.number,
-        })
-        const botComment = comments.find(comment => {
-          return comment.user.type === 'Bot' && comment.body.includes('Looks like this PR modifies files in Terraform')
-        })
+        with:
+          script: |
+            // Check if the bot already commented
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Looks like this PR modifies files in Terraform')
+            })
 
-        if (botComment) {
-          github.rest.issues.updateComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            comment_id: botComment.id,
-            body: 'Looks like this PR modifies some Terraform files.\n\nReviewers: make sure to check the `terraform plan`!'
-          })
-        }
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: 'Looks like this PR modifies some Terraform files.\n\nReviewers: make sure to check the `terraform plan`!'
+              })
+            }
