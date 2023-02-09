@@ -1,6 +1,6 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/google/osv.dev/badge)](https://api.securityscorecards.dev/projects/github.com/google/osv.dev)
 
-# OSV - Open Source Vulnerabilities
+# OSV - Open Source Vulnerabilities heehee hoohoo
 
 [osv.dev] is a [vulnerability database] and triage infrastructure for open
 source projects aimed at helping both open source maintainers and consumers of
