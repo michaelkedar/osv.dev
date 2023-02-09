@@ -8,7 +8,7 @@ module "osv_test" {
   cve_osv_conversion_bucket     = "osv-test-cve-osv-conversion"
   debian_osv_conversion_bucket  = "osv-test-debian-osv"
 
-  api_url     = "api.test.osv.dev"
+  api_url     = "api2.test.osv.dev"
   esp_version = "2.41"
 }
 
