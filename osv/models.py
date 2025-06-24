@@ -243,6 +243,19 @@ class Credit(ndb.Model):
   contact: list[str] = ndb.StringProperty(repeated=True)
   type: str = ndb.StringProperty()
 
+class AffectedVersions(ndb.Model):
+  """Affected Versions of a vulnerability."""
+  # The main bug ID.
+  bug_id = ndb.StringProperty()
+  # Name of the affected package.
+  name = ndb.StringProperty()
+  # Ecosystem of the affected package.
+  ecosystem = ndb.StringProperty()
+  # Only one of the following should be set:
+  # The enumerated affected versions.
+  versions = ndb.TextProperty(repeated=True)
+  # The ordered list of events.
+  events = ndb.LocalStructuredProperty(AffectedEvent, repeated=True)
 
 class Bug(ndb.Model):
   """Bug entity."""
@@ -835,6 +848,53 @@ class Bug(ndb.Model):
         modified_time = max(upstream_group.last_modified, modified_time)
         vulnerability.modified.FromDatetime(modified_time)
     return vulnerability
+
+  def _post_put_hook(self, future: ndb.Future):
+    """Post-put hook for (temporarily) creating the AffectedVersions entires."""
+    if future.exception():
+      # Putting raised an exception (so it failed?) - do nothing.
+      return
+    put_affected_from_bug(self)
+
+
+@ndb.transactional(join=False)
+def put_affected_from_bug(bug_entity: Bug):
+  db_id = bug_entity.db_id
+  # Always delete the old AffectedVersions for this Bug.
+  old_vers = AffectedVersions.query(AffectedVersions.bug_id == db_id).fetch(keys_only=True)
+  ndb.delete_multi(old_vers)
+
+  # Do not make AffectedVersions for Bugs that should not match the API.
+  if not bug_entity.public or bug_entity.status != bug.BugStatus.PROCESSED:
+    return
+  
+  # Compute the AffectedVersions
+  affected_versions: list[AffectedVersions] = []
+  for affected in bug_entity.affected_packages:
+    pkg = affected.package
+    if len(affected.versions) > 0:
+      affected_versions.append(AffectedVersions(
+        bug_id=db_id,
+        # TODO: name & ecosystem is empty for git-only entries
+        name=pkg.name,
+        ecosystem=pkg.ecosystem,
+        versions=affected.versions))
+    
+    for r in affected.ranges:
+      if r.type == 'GIT':
+        continue
+      # sort the events, if possible
+      events = list(r.events)
+      if (sys := ecosystems.get(pkg.ecosystem)) and sys.supports_comparing:
+        type_order = {'introduced': 0, 'last_affected': 1, 'fixed': 2, 'limit': 3}
+        events.sort(key=lambda e: (sys.sort_key(e.value), type_order[e.type]))
+      affected_versions.append(AffectedVersions(
+        bug_id=db_id,
+        name=pkg.name,
+        ecosystem=pkg.ecosystem,
+        events=events))
+    
+  ndb.put_multi(affected_versions)
 
 
 class RepoIndex(ndb.Model):

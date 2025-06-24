@@ -48,6 +48,7 @@ def reput_bugs(dryrun: bool, source: str, ids: list) -> None:
       print(
           f"Reput {num_reputted} bugs... - {num_reputted/len(result)*100:.2f}%")
       ndb.transaction(_reput_ndb)
+      # _reput_ndb()
     except Exception as e:
       # Don't have the first batch's transaction-aborting exception stop
       # subsequent batches from being attempted.

@@ -1,0 +1,31 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: osv-grpc-backend-original
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '300'
+    spec:
+      containers:
+      - image: gcr.io/michaelkedar-test/osv-server:original
+        resources:
+          limits:
+            cpu: '2'
+            memory: 8Gi
+        startupProbe:
+          grpc:
+            service: osv.v1.OSV
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        livenessProbe:
+          grpc:
+            service: osv.v1.OSV
+          timeoutSeconds: 5
+          failureThreshold: 3
+          periodSeconds: 10
+      timeoutSeconds: 60
+      containerConcurrency: 5
+
+# gcloud run services replace run.yaml --project=michaelkedar-test
