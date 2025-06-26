@@ -1,7 +1,7 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: osv-grpc-backend-original
+  name: osv-grpc-backend-new
 spec:
   template:
     metadata:
@@ -9,7 +9,7 @@ spec:
         autoscaling.knative.dev/maxScale: '300'
     spec:
       containers:
-      - image: gcr.io/michaelkedar-test/osv-server:original
+      - image: gcr.io/michaelkedar-test/osv-server:new
         resources:
           limits:
             cpu: '2'

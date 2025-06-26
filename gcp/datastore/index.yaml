@@ -104,3 +104,16 @@ indexes:
     properties:
     - name: upstream_raw
     - name: db_id
+
+  # New indexes for sorting AffectedVersions by ID
+  - kind: AffectedVersions
+    properties:
+    - name: ecosystem
+    - name: name
+    - name: bug_id
+
+  # For the ecosystem-less query
+  - kind: AffectedVersions
+    properties:
+    - name: name
+    - name: bug_id

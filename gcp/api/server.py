@@ -49,6 +49,7 @@ import osv_service_v1_pb2
 import osv_service_v1_pb2_grpc
 
 from cursor import QueryCursor
+from new_server import query_by_version_new
 
 import googlecloudprofiler
 
@@ -830,7 +831,8 @@ def do_query(query: osv_service_v1_pb2.Query,
   def to_response(b: osv.Bug):
     # Skip retrieving aliases from to_vulnerability().
     # Retrieve it asynchronously later.
-    return bug_to_response(b, include_details)
+    # return bug_to_response(b, include_details)
+    return vulnerability_pb2.Vulnerability(id=b.db_id)
 
   bugs: list[vulnerability_pb2.Vulnerability]
   if query.WhichOneof('param') == 'commit':
@@ -844,8 +846,8 @@ def do_query(query: osv_service_v1_pb2.Query,
     bugs = yield query_by_commit(context, commit_bytes, to_response=to_response)
   # Version query needs to include a package.
   elif package_name and version:
-    bugs = yield query_by_version(
-        context, package_name, ecosystem, version, to_response=to_response)
+    bugs = yield query_by_version_new(
+        context, package_name, ecosystem, version, include_details=include_details)
   elif package_name and ecosystem:
     # Package specified without version.
     bugs = yield query_by_package(
@@ -860,7 +862,7 @@ def do_query(query: osv_service_v1_pb2.Query,
   # Asynchronously retrieve computed aliases and related ids here
   # to prevent significant query time increase for packages with
   # numerous vulnerabilities.
-  if include_details:
+  if False and include_details:
     aliases = []
     related = []
     for bug in bugs:

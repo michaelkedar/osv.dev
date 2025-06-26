@@ -369,6 +369,21 @@ class Bug(ndb.Model):
       vuln_id = vuln_id[len(cls.OSV_ID_PREFIX):]
 
     return super().get_by_id(vuln_id, *args, **kwargs)
+  
+  @classmethod
+  @ndb.tasklet
+  def get_by_id_async(cls, vuln_id, *args, **kwargs):
+    """Overridden get_by_id_async to handle OSV allocated IDs."""
+    result = yield cls.query(cls.db_id == vuln_id).get_async()
+    if result:
+      return result
+
+    # TODO(ochang): Remove once all exsting bugs have IDs migrated.
+    if vuln_id.startswith(cls.OSV_ID_PREFIX):
+      vuln_id = vuln_id[len(cls.OSV_ID_PREFIX):]
+
+    result = yield super().get_by_id_async(vuln_id, *args, **kwargs)
+    return result
 
   def _tokenize(self, value):
     """Tokenize value for indexing."""
