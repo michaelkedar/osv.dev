@@ -108,9 +108,8 @@ def get_from_bucket(bug_id: str, ecosystem: str) -> vulnerability_pb2.Vulnerabil
     data = blob.download_as_bytes()
     return json_format.Parse(data, vulnerability_pb2.Vulnerability())
 
-# rpc is unhappy with using a ProcessPoolExecutor...
 # TODO: not too sure about this global ThreadPoolExecutor
-_get_from_bucket_pool = concurrent.futures.ThreadPoolExecutor()
+_get_from_bucket_pool = concurrent.futures.ThreadPoolExecutor(max_workers=128)
 
 def get_from_bucket_async(bug_id: str, ecosystem: str) -> ndb.Future:
   f = _get_from_bucket_pool.submit(get_from_bucket, bug_id, ecosystem)
