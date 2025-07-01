@@ -814,12 +814,16 @@ class Bug(ndb.Model):
         include_alias=False,
         include_upstream=False)
 
-    related_bug_ids = yield get_related_async(vulnerability.id)
+    related_future = get_related_async(vulnerability.id)
+    alias_future = get_aliases_async(vulnerability.id) if include_alias else None
+    upstream_future = get_upstream_async(vulnerability.id) if include_upstream else None
+
+    related_bug_ids = yield related_future
     vulnerability.related[:] = sorted(
         list(set(related_bug_ids + list(vulnerability.related))))
 
     if include_alias:
-      alias_group = yield get_aliases_async(vulnerability.id)
+      alias_group = yield alias_future
       if alias_group:
         alias_ids = sorted(list(set(alias_group.bug_ids) - {vulnerability.id}))
         vulnerability.aliases[:] = alias_ids
@@ -828,7 +832,7 @@ class Bug(ndb.Model):
         vulnerability.modified.FromDatetime(modified_time)
 
     if include_upstream:
-      upstream_group = yield get_upstream_async(vulnerability.id)
+      upstream_group = yield upstream_future
       if upstream_group:
         vulnerability.upstream[:] = upstream_group.upstream_ids
         modified_time = vulnerability.modified.ToDatetime(datetime.UTC)

@@ -749,6 +749,9 @@ def determine_version(version_query: osv_service_v1_pb2.VersionQuery,
                                         len(version_query.file_hashes))
 
 
+def bug_to_response_async(b: osv.Bug):
+  return b.to_vulnerability_async(True, True, True)
+
 @ndb.tasklet
 def do_query(query: osv_service_v1_pb2.Query,
              context: QueryContext,
@@ -828,8 +831,8 @@ def do_query(query: osv_service_v1_pb2.Query,
         _MAX_VULN_LISTED_PRE_EXCEEDED_UBUNTU_EXCEPTION
 
   def to_response(b: osv.Bug):
-    # Skip retrieving aliases from to_vulnerability().
-    # Retrieve it asynchronously later.
+    if include_details:
+      return bug_to_response_async(b)
     return bug_to_response(b, include_details)
 
   bugs: list[vulnerability_pb2.Vulnerability]
@@ -857,30 +860,9 @@ def do_query(query: osv_service_v1_pb2.Query,
     # to know that control flow breaks here.
     raise ValueError
 
-  # Asynchronously retrieve computed aliases and related ids here
-  # to prevent significant query time increase for packages with
-  # numerous vulnerabilities.
   if include_details:
-    aliases = []
-    related = []
-    for bug in bugs:
-      aliases.append(osv.get_aliases_async(bug.id))
-      related.append(osv.get_related_async(bug.id))
-
-    for i, alias in enumerate(aliases):
-      alias_group: osv.AliasGroup = yield alias
-      if not alias_group:
-        continue
-      alias_ids = sorted(list(set(alias_group.bug_ids) - {bugs[i].id}))
-      bugs[i].aliases[:] = alias_ids
-      modified_time = bugs[i].modified.ToDatetime(UTC)
-      modified_time = max(alias_group.last_modified, modified_time)
-      bugs[i].modified.FromDatetime(modified_time)
-
-    for i, related_ids in enumerate(related):
-      related_bug_ids: list[str] = yield related_ids
-      bugs[i].related[:] = sorted(
-          list(set(related_bug_ids + list(bugs[i].related))))
+    bugs = yield bugs
+    bugs = list(bugs)
 
   if context.query_counter < context.input_cursor.query_number:
     logging.error(
