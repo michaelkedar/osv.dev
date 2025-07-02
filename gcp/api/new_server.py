@@ -55,7 +55,8 @@ def query_by_version_new(
         last_matched_id = affected.bug_id
         # bugs.append(osv.Bug.get_by_id_async(affected.bug_id))
         # bugs.append(vulnerability_pb2.Vulnerability(id=affected.bug_id))
-        bugs.append(get_from_bucket_async(affected.bug_id, affected.ecosystem))
+        # bugs.append(get_from_bucket_async(affected.bug_id, affected.ecosystem))
+        bugs.append(get_from_datastore_async(affected.bug_id))
         
         context.total_responses.add(1)
     except:
@@ -89,6 +90,13 @@ def affected_affects(version: str, affected: osv.AffectedVersions) -> bool:
     return False
   
   return False
+
+
+@ndb.tasklet
+def get_from_datastore_async(bug_id: str):
+  b: osv.Bug = yield osv.Bug.get_by_id_async(bug_id)
+  vuln = yield b.to_vulnerability_async(True, True, True)
+  return vuln
 
 
 from google.cloud import storage
