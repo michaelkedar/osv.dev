@@ -810,13 +810,21 @@ class Bug(ndb.Model):
                              include_upstream=False):
     """Converts to Vulnerability proto and retrieves aliases asynchronously."""
     vulnerability: vulnerability_pb2.Vulnerability = self.to_vulnerability(
-        include_source=include_source,
+        include_source=False,
         include_alias=False,
         include_upstream=False)
 
+    source_future = SourceRepository.get_by_id_async(self.source) if include_source else None
     related_future = get_related_async(vulnerability.id)
     alias_future = get_aliases_async(vulnerability.id) if include_alias else None
     upstream_future = get_upstream_async(vulnerability.id) if include_upstream else None
+
+    if include_source:
+      source_repo = yield source_future
+      if source_repo and source_repo.link:
+        source_link = source_repo.link + sources.source_path(source_repo, self)
+        for affected in vulnerability.affected:
+          affected.database_specific.update({'source': source_link})
 
     related_bug_ids = yield related_future
     vulnerability.related[:] = sorted(
