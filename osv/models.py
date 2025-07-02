@@ -655,6 +655,41 @@ class Bug(ndb.Model):
       modified = None
 
     return vulnerability_pb2.Vulnerability(id=self.id(), modified=modified)
+  
+  @ndb.tasklet
+  def to_vulnerability_minimal_async(self,
+                             include_alias=False,
+                             include_upstream=False):
+    modified = None
+    if self.last_modified:
+      modified = self.last_modified
+    
+    alias_future = get_aliases_async(self.id()) if include_alias else None
+    upstream_future = get_upstream_async(self.id()) if include_upstream else None
+    
+    if include_alias:
+      alias_group: AliasGroup = yield alias_future
+      if alias_group and alias_group.last_modified:
+        if modified is None:
+          modified = alias_group.last_modified
+        else:
+          modified = max(modified, alias_group.last_modified)
+    
+    if include_upstream:
+      upstream_group: UpstreamGroup = yield upstream_future
+      if upstream_group and upstream_group.last_modified:
+        if modified is None:
+          modified = upstream_group.last_modified
+        else:
+          modified = max(modified, upstream_group.last_modified)
+    
+    if modified is not None:
+      ts = timestamp_pb2.Timestamp()
+      ts.FromDatetime(modified)
+      modified = ts
+    
+    return vulnerability_pb2.Vulnerability(id=self.id(), modified=modified)
+
 
   def to_vulnerability(self,
                        include_source=False,
