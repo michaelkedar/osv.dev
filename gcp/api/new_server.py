@@ -32,6 +32,7 @@ def query_by_version_new(
   query = query.order(osv.AffectedVersions.bug_id)
 
   bugs = []
+  get_bug = get_from_datastore_async if include_details else get_minimal_from_datastore_async
   # in case something matches multiple times
   # since the ids are in order, we only need to track the last matched one
   # TODO: if this gets paginated, it might return the same vuln multiple times
@@ -56,15 +57,13 @@ def query_by_version_new(
         # bugs.append(osv.Bug.get_by_id_async(affected.bug_id))
         # bugs.append(vulnerability_pb2.Vulnerability(id=affected.bug_id))
         # bugs.append(get_from_bucket_async(affected.bug_id, affected.ecosystem))
-        bugs.append(get_from_datastore_async(affected.bug_id))
+        bugs.append(get_bug(affected.bug_id))
         
         context.total_responses.add(1)
     except:
       logging.exception('failed to query by versions')
 
   bugs = yield bugs
-  if not include_details:
-    return [vulnerability_pb2.Vulnerability(id=b.id, modified=b.modified) for b in bugs]
   return list(bugs)
   # return bugs
 
@@ -97,6 +96,40 @@ def get_from_datastore_async(bug_id: str):
   b: osv.Bug = yield osv.Bug.get_by_id_async(bug_id)
   vuln = yield b.to_vulnerability_async(True, True, True)
   return vuln
+
+
+from google.protobuf import timestamp_pb2
+
+@ndb.tasklet
+def get_minimal_from_datastore_async(bug_id: str):
+  bug, alias, upstream = yield (
+    osv.Bug.query(osv.Bug.db_id == bug_id, projection=[osv.Bug.last_modified]).get_async(),
+    osv.get_aliases_async(bug_id),
+    osv.get_upstream_async(bug_id),
+  )
+  modified = None
+  
+  if bug and bug.last_modified:
+    modified = bug.last_modified
+  
+  if alias and alias.last_modified:
+    if modified is None:
+      modified = alias.last_modified
+    else:
+      modified = max(modified, alias.last_modified)
+  
+  if upstream and upstream.last_modified:
+    if modified is None:
+      modified = upstream.last_modified
+    else:
+      modified = max(modified, upstream.last_modified)
+
+  if modified is not None:
+    ts = timestamp_pb2.Timestamp()
+    ts.FromDatetime(modified)
+    modified = ts
+  
+  return vulnerability_pb2.Vulnerability(id=bug_id, modified=modified)
 
 
 from google.cloud import storage
