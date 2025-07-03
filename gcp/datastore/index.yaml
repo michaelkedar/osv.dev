@@ -117,3 +117,9 @@ indexes:
     properties:
     - name: name
     - name: bug_id
+
+  # For batch query
+  - kind: Bug
+    properties:
+    - name: db_id
+    - name: last_modified
