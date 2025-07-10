@@ -33,7 +33,7 @@ def query_by_version_new(
     ecosystem: str | None,
     version: str,
     include_details: bool = True
-) -> list[vulnerability_pb2.Vulnerability]:
+) -> list[ndb.Future]:
   """
   Queries for vulnerabilities by package and version using a new data model.
 
@@ -97,8 +97,7 @@ def query_by_version_new(
     except Exception:
       logging.exception('Failed to query by version')
 
-  bugs = yield bugs
-  return list(bugs)
+  return bugs
 
 
 def affected_affects(version: str, affected: osv.AffectedVersions) -> bool:
