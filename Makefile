@@ -49,8 +49,20 @@ lint:
 	tools/lint_and_format.sh
 
 build-protos:
+	@echo "--- Generating Python protos ---"
 	$(run-cmd) python -m grpc_tools.protoc --python_out=. --mypy_out=. --proto_path=. osv/*.proto
-	cd gcp/api/v1 && $(run-cmd) python -m grpc_tools.protoc --include_imports --include_source_info --proto_path=googleapis --proto_path=. --proto_path=.. --descriptor_set_out=api_descriptor.pb --python_out=../. --grpc_python_out=../ --mypy_out=../ osv_service_v1.proto
+	$(run-cmd) python -m grpc_tools.protoc --include_imports --include_source_info --proto_path=api/proto/osv/v1 --proto_path=. --proto_path=third_party/googleapis --descriptor_set_out=gcp/api/api_descriptor.pb --python_out=gcp/api --grpc_python_out=gcp/api --mypy_out=gcp/api osv_service_v1.proto
+	@echo "--- Generating Go protos ---"
+	protoc --go_out=go/internal/models --go_opt=paths=source_relative -I./osv --go_opt=Mimportfinding.proto=github.com/google/osv.dev/go/internal/models osv/importfinding.proto
+	protoc \
+		--go_out=go/pkg/api/osv/v1 --go_opt=paths=source_relative \
+		--go-grpc_out=go/pkg/api/osv/v1 --go-grpc_opt=paths=source_relative \
+		-I. -Ithird_party/googleapis -Iapi/proto/osv/v1 \
+		--go_opt=Mosv/vulnerability.proto=github.com/ossf/osv-schema/bindings/go/osvschema \
+		--go_opt=Mosv/importfinding.proto=github.com/google/osv.dev/go/internal/models \
+		--go-grpc_opt=Mosv/vulnerability.proto=github.com/ossf/osv-schema/bindings/go/osvschema \
+		--go-grpc_opt=Mosv/importfinding.proto=github.com/google/osv.dev/go/internal/models \
+		osv_service_v1.proto
 
 run-website:
 	cd gcp/website/frontend3 && npm install && npm run build

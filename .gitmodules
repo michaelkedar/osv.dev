@@ -1,5 +1,5 @@
 [submodule "gcp/api/googleapis"]
-	path = gcp/api/googleapis
+	path = third_party/googleapis
 	url = https://github.com/googleapis/googleapis
 [submodule "docker/worker/osv-test"]
 	path = gcp/workers/worker/osv-test

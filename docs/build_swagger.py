@@ -23,24 +23,17 @@ _GENERATED_FILENAME = 'v1/osv_service_v1.swagger.json'
 
 
 def main():
-  api_dir = os.path.join(_ROOT_DIR, 'gcp', 'api')
-  v1_api_dir = os.path.join(api_dir, 'v1')
-  googleapis_dir = os.path.join(api_dir, 'googleapis')
-  service_proto_path = os.path.join(v1_api_dir, 'osv_service_v1.proto')
+  api_proto_dir = os.path.join(_ROOT_DIR, 'api', 'proto', 'osv', 'v1')
+  googleapis_dir = os.path.join(_ROOT_DIR, 'third_party', 'googleapis')
+  service_proto_path = os.path.join(api_proto_dir, 'osv_service_v1.proto')
 
   # Add OSV dependencies.
-  osv_path = os.path.join(api_dir, 'osv')
-  if os.path.exists(osv_path):
-    shutil.rmtree(osv_path)
-
-  shutil.copytree(os.path.join(_ROOT_DIR, 'osv'), osv_path)
+  osv_path = os.path.join(_ROOT_DIR, 'osv')
 
   subprocess.run([
       'protoc',
       '-I',
-      api_dir,
-      '-I',
-      v1_api_dir,
+      _ROOT_DIR,
       '-I',
       googleapis_dir,
       '--openapiv2_out',

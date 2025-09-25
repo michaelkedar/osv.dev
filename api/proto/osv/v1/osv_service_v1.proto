@@ -16,6 +16,8 @@ syntax = "proto3";
 
 package osv.v1;
 
+option go_package = "github.com/google/osv.dev/go/pkg/api/osv/v1";
+
 import "osv/vulnerability.proto";
 import "osv/importfinding.proto";
 import "google/api/annotations.proto";

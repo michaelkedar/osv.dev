@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	"github.com/google/osv.dev/go/models"
+	"github.com/google/osv.dev/go/internal/models"
 )
 
 func main() {

@@ -15,7 +15,7 @@ import (
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
 	"github.com/google/osv.dev/go/logger"
-	"github.com/google/osv.dev/go/models"
+	"github.com/google/osv.dev/go/internal/models"
 	"google.golang.org/api/iterator"
 )
 

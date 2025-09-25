@@ -3,22 +3,13 @@
 The API server runs on Cloud Run with Cloud Endpoints.
 
 # GRPC and service configuration
-Updates to the protobufs and service configurations require a few steps,
-outlined below.
 
-## Regenerate protobufs
-```
-python3 -m grpc_tools.protoc \
-    --include_imports \
-    --include_source_info \
-    --proto_path=googleapis \
-    --proto_path=. \
-    --proto_path=.. \
-    --descriptor_set_out=api_descriptor.pb \
-    --python_out=../. \
-    --grpc_python_out=../ \
-    --mypy_out=../ \
-    osv_service_v1.proto
+The canonical Protobuf API definition is located at `api/proto/osv/v1/osv_service_v1.proto`.
+
+To generate the Python gRPC stubs from the API definition, run the `build-protos` target from the top-level `Makefile` in the root of the repository:
+
+```sh
+make build-protos
 ```
 
 ## Deploy service proxy
