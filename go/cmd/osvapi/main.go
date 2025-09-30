@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net"
+	"os"
 
+	"cloud.google.com/go/compute/metadata"
+	"cloud.google.com/go/datastore"
 	"google.golang.org/grpc"
 
 	"github.com/google/osv.dev/go/internal/server"
@@ -11,11 +16,29 @@ import (
 )
 
 const (
-	port = ":8080"
+	port = ":8000"
 )
 
 func main() {
 	log.Printf("Starting OSV API server on port %s", port)
+
+	ctx := context.Background()
+	proj := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if proj == "" {
+		err := errors.New("GOOGLE_CLOUD_PROJECT environment variable must be set")
+		if metadata.OnGCE() {
+			proj, err = metadata.ProjectIDWithContext(ctx)
+		}
+		if err != nil {
+			log.Fatalf("Failed to get project ID: %v", err)
+		}
+	}
+
+	dsClient, err := datastore.NewClient(ctx, proj)
+	if err != nil {
+		log.Fatalf("Failed to create datastore client: %v", err)
+	}
+	defer dsClient.Close()
 
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
@@ -23,7 +46,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	v1.RegisterOSVServer(s, &server.Server{})
+	v1.RegisterOSVServer(s, server.NewServer(dsClient))
 
 	log.Printf("Server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {

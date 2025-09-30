@@ -35,6 +35,14 @@ func readRecords(ctx context.Context, client *datastore.Client) {
 		fmt.Printf("(Go) Failed getting Vulnerability: %v\n", err)
 		os.Exit(1)
 	}
+
+	fmt.Println("(Go) Getting AliasGroup")
+	key = datastore.NameKey("AliasGroup", "111", nil)
+	var aliasGroup models.AliasGroup
+	if err := client.Get(ctx, key, &aliasGroup); err != nil {
+		fmt.Printf("(Go) Failed getting AliasGroup: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func writeRecords(ctx context.Context, client *datastore.Client) {
@@ -51,6 +59,17 @@ func writeRecords(ctx context.Context, client *datastore.Client) {
 	}
 	if _, err := client.Put(ctx, key, &vulnerability); err != nil {
 		fmt.Printf("(Go) Failed writing Vulnerability %v: %v\n", key, err)
+		os.Exit(1)
+	}
+
+	fmt.Println("(Go) Writing AliasGroup")
+	key = datastore.NameKey("AliasGroup", "222", nil)
+	aliasGroup := models.AliasGroup{
+		BugIDs:       []string{"CVE-222-222", "OSV-222-222"},
+		LastModified: time.Date(2022, time.February, 22, 22, 22, 22, 22, time.UTC),
+	}
+	if _, err := client.Put(ctx, key, &aliasGroup); err != nil {
+		fmt.Printf("(Go) Failed writing AliasGroup %v: %v\n", key, err)
 		os.Exit(1)
 	}
 }

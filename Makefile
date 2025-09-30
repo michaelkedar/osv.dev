@@ -53,6 +53,7 @@ build-protos:
 	$(run-cmd) python -m grpc_tools.protoc --python_out=. --mypy_out=. --proto_path=. osv/*.proto
 	$(run-cmd) python -m grpc_tools.protoc --include_imports --include_source_info --proto_path=api/proto/osv/v1 --proto_path=. --proto_path=third_party/googleapis --descriptor_set_out=gcp/api/api_descriptor.pb --python_out=gcp/api --grpc_python_out=gcp/api --mypy_out=gcp/api osv_service_v1.proto
 	@echo "--- Generating Go protos ---"
+	protoc --go_out=osv/osv-schema/bindings/go/osvschema --go_opt=paths=source_relative -I./osv/osv-schema/proto osv/osv-schema/proto/vulnerability.proto
 	protoc --go_out=go/internal/models --go_opt=paths=source_relative -I./osv --go_opt=Mimportfinding.proto=github.com/google/osv.dev/go/internal/models osv/importfinding.proto
 	protoc \
 		--go_out=go/pkg/api/osv/v1 --go_opt=paths=source_relative \
@@ -83,7 +84,7 @@ run-website-emulator:
 run-api-server:
 	test -f $(HOME)/.config/gcloud/application_default_credentials.json || (echo "GCP Application Default Credentials not set, try 'gcloud auth login --update-adc'"; exit 1)
 	cd gcp/api && docker build -f Dockerfile.esp -t osv/esp:latest .
-	cd gcp/api && $(install-cmd) && GOOGLE_CLOUD_PROJECT=oss-vdb $(run-cmd) python test_server.py $(HOME)/.config/gcloud/application_default_credentials.json $(ARGS)# Run with `make run-api-server ARGS=--no-backend` to launch esp without backend.
+	cd gcp/api && $(install-cmd) && GOOGLE_CLOUD_PROJECT=oss-vdb $(run-cmd) python test_server.py $(HOME)/.config/gcloud/application_default_credentials.json $(ARGS)
 
 run-api-server-test:
 	test -f $(HOME)/.config/gcloud/application_default_credentials.json || (echo "GCP Application Default Credentials not set, try 'gcloud auth login --update-adc'"; exit 1)

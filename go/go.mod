@@ -2,6 +2,8 @@ module github.com/google/osv.dev/go
 
 go 1.24.6
 
+replace github.com/ossf/osv-schema/bindings/go => ../osv/osv-schema/bindings/go
+
 require (
 	cloud.google.com/go/datastore v1.20.0
 	cloud.google.com/go/pubsub v1.49.0

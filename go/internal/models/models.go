@@ -26,3 +26,8 @@ type Vulnerability struct {
 	RelatedRaw  []string  `datastore:"related_raw"`
 	UpstreamRaw []string  `datastore:"upstream_raw"`
 }
+
+type AliasGroup struct {
+	BugIDs       []string  `datastore:"bug_ids"`
+	LastModified time.Time `datastore:"last_modified"`
+}

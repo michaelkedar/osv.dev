@@ -19,7 +19,7 @@ import sys
 from google.cloud import ndb
 
 import osv.tests
-from osv import Vulnerability
+from osv import Vulnerability, AliasGroup
 
 
 def main() -> int:
@@ -36,6 +36,13 @@ def main() -> int:
       upstream_raw=['CVE-123-000', 'OSV-123-000'],
   ).put()
 
+  print('(Python) Putting AliasGroup')
+  AliasGroup(
+    id='111',
+    bug_ids=['CVE-111-111', 'OSV-111-111', 'GHSA-1111-1111-1111'],
+    last_modified=datetime.datetime(2011, 11, 11, 1, 1, 1, tzinfo=datetime.UTC),
+  ).put()
+
   # Run Go program to read the Python-created entities in Go.
   # And write Go entities.
   result = subprocess.run(['go', 'run', './validate.go'], check=False)
@@ -45,6 +52,10 @@ def main() -> int:
   # Read the Go-created entities in Python.
   print('(Python) Getting Vulnerability')
   if Vulnerability.get_by_id('CVE-987-654') is None:
+    return 1
+  
+  print('(Python) Getting AliasGroup')
+  if AliasGroup.get_by_id('222') is None:
     return 1
   return 0
 
