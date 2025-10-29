@@ -135,7 +135,15 @@
           {%- if vulnerabilities | length == 0 -%}
           <span class="no-results">No results (check our <a href="https://google.github.io/osv.dev/faq/">FAQ</a> if this is unexpected)</span>
           {%- endif -%}
-          {%- if page < total_pages -%} <turbo-frame id="vulnerability-table-page{{ page + 1 }}"
+	  {%- if page >= 100 -%}
+            <div class="next-page-container">
+              <a class="next-page-button link-button" href="https://google.github.io/osv.dev/data/#data-dumps">
+                <span>Download our data dumps</span>
+              </a>
+              <md-circular-progress class="next-page-indicator" indeterminate density="-4"
+                aria-label="Page loading progress"></md-circular-progress>
+            </div>
+          {%- elif page < total_pages -%} <turbo-frame id="vulnerability-table-page{{ page + 1 }}"
             data-turbo-action="advance" target="_top" class="next-page-frame">
             <div class="next-page-container">
               <a class="next-page-button link-button" data-turbo-frame="_self" href="{{ url_for(request.endpoint) }}?page={{ page + 1 }}
